@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH:/app/backend/logs/survey-app.log}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH:/app/backend/logs/survey-app.log}.%d{yyyy-MM-dd}.%i</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>${LOG_FILE_MAX_SIZE:10MB}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_FILE_MAX_HISTORY:7}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root Logger -->
+    <root level="${LOG_LEVEL_ROOT:INFO}">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- Application Loggers -->
+    <logger name="com.survey" level="${LOG_LEVEL_SURVEY:INFO}"/>
+    <logger name="com.survey.controller" level="${LOG_LEVEL_CONTROLLER:INFO}"/>
+    <logger name="com.survey.service" level="${LOG_LEVEL_SERVICE:INFO}"/>
+    <logger name="com.survey.repository" level="${LOG_LEVEL_REPOSITORY:INFO}"/>
+    <logger name="com.survey.security" level="${LOG_LEVEL_SECURITY:INFO}"/>
+    <logger name="com.survey.config" level="${LOG_LEVEL_CONFIG:INFO}"/>
+
+    <!-- Spring Framework Loggers -->
+    <logger name="org.springframework.security" level="${LOG_LEVEL_SPRING_SECURITY:WARN}"/>
+    <logger name="org.springframework.web" level="${LOG_LEVEL_SPRING_WEB:INFO}"/>
+    <logger name="org.springframework.data" level="${LOG_LEVEL_SPRING_DATA:INFO}"/>
+
+    <!-- Hibernate Loggers -->
+    <logger name="org.hibernate.SQL" level="${LOG_LEVEL_HIBERNATE:WARN}"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="${LOG_LEVEL_HIBERNATE_BINDER:WARN}"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="${LOG_LEVEL_HIBERNATE_BINDER:WARN}"/>
+
+    <!-- Reduce noise from other frameworks -->
+    <logger name="org.springframework.boot.autoconfigure" level="WARN"/>
+    <logger name="org.springframework.boot.context" level="WARN"/>
+    <logger name="org.springframework.boot.web" level="WARN"/>
+    <logger name="org.springframework.boot.actuate" level="WARN"/>
+</configuration> 

@@ -1,0 +1,54 @@
+services:
+  survey-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      # Mount database for persistence
+      - ./backend/survey.db:/app/backend/survey.db
+    environment:
+      - DATABASE_URL=jdbc:sqlite:/app/backend/survey.db?mode=rwc
+      - CORS_ALLOWED_ORIGINS=*
+      # Logging Configuration
+      - LOG_LEVEL_ROOT=INFO
+      - LOG_LEVEL_SURVEY=INFO
+      - LOG_LEVEL_CONTROLLER=INFO
+      - LOG_LEVEL_SERVICE=INFO
+      - LOG_LEVEL_REPOSITORY=INFO
+      - LOG_LEVEL_SECURITY=INFO
+      - LOG_LEVEL_CONFIG=INFO
+      - LOG_LEVEL_SPRING_SECURITY=WARN
+      - LOG_LEVEL_SPRING_WEB=INFO
+      - LOG_LEVEL_SPRING_DATA=INFO
+      - LOG_LEVEL_HIBERNATE=WARN
+      - LOG_LEVEL_HIBERNATE_BINDER=WARN
+      # Nginx Configuration
+      - NGINX_ACCESS_LOG=true
+      # Application Configuration
+      - HEALTH_SHOW_DETAILS=when-authorized
+      - JPA_OPEN_IN_VIEW=false
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - COMPOSE_BAKE=true
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - survey-network
+
+networks:
+  survey-network:
+    driver: bridge
+
+volumes:
+  survey-data: 
