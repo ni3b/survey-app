@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { LoginRequest, LoginResponse, User } from '../types';
+import { handleError } from './errorService';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
@@ -46,10 +47,8 @@ export const authService = {
       const response = await apiClient.post('/auth/login', credentials);
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      throw new Error('Login failed. Please try again.');
+      handleError(error, { component: 'AuthService', action: 'login' }, false);
+      throw error; // Re-throw to let the component handle it
     }
   },
 
@@ -61,7 +60,8 @@ export const authService = {
       const response = await apiClient.get('/auth/me');
       return response.data;
     } catch (error: any) {
-      throw new Error('Failed to get user information');
+      handleError(error, { component: 'AuthService', action: 'getCurrentUser' }, false);
+      throw error;
     }
   },
 

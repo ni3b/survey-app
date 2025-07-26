@@ -85,6 +85,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("role", user.getRole().name())
+                .claim("userId", user.getId())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
@@ -123,6 +124,40 @@ public class JwtTokenProvider {
                 .getBody();
         
         return claims.get("role", String.class);
+    }
+    
+    /**
+     * Get user ID from JWT token.
+     * 
+     * @param token JWT token string
+     * @return user ID from token, or null if not found
+     */
+    public Long getUserIdFromToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            
+            // Check if userId claim exists
+            Object userIdClaim = claims.get("userId");
+            if (userIdClaim != null) {
+                if (userIdClaim instanceof Long) {
+                    return (Long) userIdClaim;
+                } else if (userIdClaim instanceof Integer) {
+                    return ((Integer) userIdClaim).longValue();
+                } else if (userIdClaim instanceof String) {
+                    return Long.parseLong((String) userIdClaim);
+                }
+            }
+            
+            // If no userId claim, return null
+            return null;
+        } catch (Exception e) {
+            logger.error("Error extracting user ID from token", e);
+            return null;
+        }
     }
     
     /**

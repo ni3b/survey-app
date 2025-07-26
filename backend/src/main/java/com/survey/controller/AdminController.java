@@ -85,8 +85,8 @@ public class AdminController {
                 creatorId = 1L; // Default admin user ID
             }
             
-            Survey survey = surveyService.createSurvey(surveyDto, creatorId);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto createdSurvey = surveyService.createSurvey(surveyDto, creatorId);
+            return ResponseEntity.ok(createdSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -105,8 +105,8 @@ public class AdminController {
     @Operation(summary = "Update survey", description = "Update an existing survey")
     public ResponseEntity<?> updateSurvey(@PathVariable Long id, @Valid @RequestBody SurveyDto surveyDto) {
         try {
-            Survey survey = surveyService.updateSurvey(id, surveyDto);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto updatedSurvey = surveyService.updateSurvey(id, surveyDto);
+            return ResponseEntity.ok(updatedSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -143,8 +143,8 @@ public class AdminController {
     @Operation(summary = "Publish survey", description = "Publish a survey to make it active")
     public ResponseEntity<?> publishSurvey(@PathVariable Long id) {
         try {
-            Survey survey = surveyService.publishSurvey(id);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto publishedSurvey = surveyService.publishSurvey(id);
+            return ResponseEntity.ok(publishedSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -164,8 +164,8 @@ public class AdminController {
     public ResponseEntity<?> scheduleSurvey(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
             LocalDateTime startDate = LocalDateTime.parse(request.get("startDate"));
-            Survey survey = surveyService.scheduleSurvey(id, startDate);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto scheduledSurvey = surveyService.scheduleSurvey(id, startDate);
+            return ResponseEntity.ok(scheduledSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -183,8 +183,8 @@ public class AdminController {
     @Operation(summary = "Close survey", description = "Close a survey")
     public ResponseEntity<?> closeSurvey(@PathVariable Long id) {
         try {
-            Survey survey = surveyService.closeSurvey(id);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto closedSurvey = surveyService.closeSurvey(id);
+            return ResponseEntity.ok(closedSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -211,8 +211,8 @@ public class AdminController {
             question.setMaxResponses(questionDto.getMaxResponses());
             question.setAllowMultipleAnswers(questionDto.isAllowMultipleAnswers());
             
-            Survey survey = surveyService.addQuestionToSurvey(surveyId, question);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto updatedSurvey = surveyService.addQuestionToSurvey(surveyId, question);
+            return ResponseEntity.ok(updatedSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -253,8 +253,8 @@ public class AdminController {
     @Operation(summary = "Delete question", description = "Delete a question from a survey")
     public ResponseEntity<?> deleteQuestion(@PathVariable Long surveyId, @PathVariable Long questionId) {
         try {
-            Survey survey = surveyService.removeQuestionFromSurvey(surveyId, questionId);
-            return ResponseEntity.ok(new SurveyDto(survey));
+            SurveyDto updatedSurvey = surveyService.removeQuestionFromSurvey(surveyId, questionId);
+            return ResponseEntity.ok(updatedSurvey);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -272,6 +272,7 @@ public class AdminController {
     public ResponseEntity<?> getAnalytics() {
         try {
             var surveyStats = surveyService.getSurveyStatistics();
+            var responseStats = responseService.getOverallResponseStatistics();
             var userStats = Map.of(
                 "totalUsers", userService.getAllUsers().size(),
                 "adminUsers", userService.getAdminUsers().size(),
@@ -280,6 +281,7 @@ public class AdminController {
             
             return ResponseEntity.ok(Map.of(
                 "surveyStats", surveyStats,
+                "responseStats", responseStats,
                 "userStats", userStats
             ));
             

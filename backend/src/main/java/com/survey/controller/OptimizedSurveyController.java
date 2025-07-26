@@ -4,6 +4,7 @@ import com.survey.dto.SurveyDto;
 import com.survey.dto.ResponseDto;
 import com.survey.service.SurveyService;
 import com.survey.service.ResponseService;
+import com.survey.security.JwtTokenProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
@@ -39,6 +41,9 @@ public class OptimizedSurveyController {
     
     @Autowired
     private ResponseService responseService;
+    
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/active")
     @Operation(summary = "Get all active surveys")
@@ -95,9 +100,14 @@ public class OptimizedSurveyController {
             @PathVariable Long questionId,
             @Parameter(description = "Maximum number of responses") 
             @RequestParam(defaultValue = "5") 
-            @Min(1) @Max(50) int limit) {
+            @Min(1) @Max(50) int limit,
+            HttpServletRequest request) {
         
-        List<ResponseDto> responses = responseService.getTopResponseDtosForQuestion(questionId, limit, null);
+        // Extract user ID from JWT token (optional for viewing responses)
+        String token = extractTokenFromRequest(request);
+        Long userId = token != null ? jwtTokenProvider.getUserIdFromToken(token) : null;
+        
+        List<ResponseDto> responses = responseService.getTopResponseDtosForQuestion(questionId, limit, userId);
         return ResponseEntity.ok(responses);
     }
 
@@ -106,9 +116,18 @@ public class OptimizedSurveyController {
     public ResponseEntity<ResponseDto> submitResponse(
             @Parameter(description = "Question ID") 
             @RequestParam Long questionId,
-            @Valid @RequestBody ResponseDto responseDto) {
+            @Valid @RequestBody ResponseDto responseDto,
+            HttpServletRequest request) {
         
-        ResponseDto savedResponse = responseService.createResponseDto(questionId, responseDto);
+        // Extract user ID from JWT token
+        String token = extractTokenFromRequest(request);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        ResponseDto savedResponse = responseService.createResponseDto(questionId, responseDto, userId);
         return ResponseEntity.ok(savedResponse);
     }
 
@@ -116,9 +135,18 @@ public class OptimizedSurveyController {
     @Operation(summary = "Upvote response")
     public ResponseEntity<?> upvoteResponse(
             @Parameter(description = "Response ID") 
-            @PathVariable Long responseId) {
+            @PathVariable Long responseId,
+            HttpServletRequest request) {
         
-        responseService.upvoteResponse(responseId, null);
+        // Extract user ID from JWT token
+        String token = extractTokenFromRequest(request);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        responseService.upvoteResponse(responseId, userId);
         return ResponseEntity.ok().build();
     }
 
@@ -126,9 +154,18 @@ public class OptimizedSurveyController {
     @Operation(summary = "Remove upvote")
     public ResponseEntity<?> removeUpvote(
             @Parameter(description = "Response ID") 
-            @PathVariable Long responseId) {
+            @PathVariable Long responseId,
+            HttpServletRequest request) {
         
-        responseService.removeUpvote(responseId, null);
+        // Extract user ID from JWT token
+        String token = extractTokenFromRequest(request);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        responseService.removeUpvote(responseId, userId);
         return ResponseEntity.ok().build();
     }
 
@@ -139,5 +176,16 @@ public class OptimizedSurveyController {
             @PathVariable Long questionId) {
         
         return ResponseEntity.ok(responseService.getQuestionStatistics(questionId));
+    }
+    
+    /**
+     * Extract JWT token from request header.
+     */
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 } 

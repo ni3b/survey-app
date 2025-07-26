@@ -103,7 +103,7 @@ REACT_APP_API_URL=/api
 - Browse active surveys
 - Participate in surveys with various question types
 - View top responses with upvotes
-- Submit anonymous or named responses
+- Submit responses
 - Upvote responses (one per user per response)
 
 ### Admin Features

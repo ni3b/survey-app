@@ -22,7 +22,7 @@ public class ResponseDto {
     private LocalDateTime updatedAt;
     private Long questionId;
     private String authorName;
-    private boolean anonymous;
+
     private int upvoteCount;
     private boolean hasUserUpvoted;
     
@@ -34,12 +34,17 @@ public class ResponseDto {
         this.text = response.getText();
         this.createdAt = response.getCreatedAt();
         this.updatedAt = response.getUpdatedAt();
-        this.anonymous = response.isAnonymous();
+
         this.upvoteCount = response.getUpvoteCount();
         this.authorName = response.getAuthorDisplayName();
         
-        if (response.getQuestion() != null) {
-            this.questionId = response.getQuestion().getId();
+        try {
+            if (response.getQuestion() != null) {
+                this.questionId = response.getQuestion().getId();
+            }
+        } catch (Exception e) {
+            // Handle LazyInitializationException for Question entity
+            this.questionId = null;
         }
     }
     
@@ -97,13 +102,7 @@ public class ResponseDto {
         this.authorName = authorName;
     }
     
-    public boolean isAnonymous() {
-        return anonymous;
-    }
-    
-    public void setAnonymous(boolean anonymous) {
-        this.anonymous = anonymous;
-    }
+
     
     public int getUpvoteCount() {
         return upvoteCount;

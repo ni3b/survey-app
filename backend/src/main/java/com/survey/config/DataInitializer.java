@@ -109,8 +109,8 @@ public class DataInitializer implements CommandLineRunner {
         employeeSurvey.setStatus(Survey.SurveyStatus.ACTIVE);
         employeeSurvey.setStartDate(LocalDateTime.now().minusDays(7));
         employeeSurvey.setEndDate(LocalDateTime.now().plusDays(30));
-        employeeSurvey.setAnonymous(true);
         employeeSurvey.setAllowMultipleResponses(false);
+        employeeSurvey.setRequireAuthentication(true);
         employeeSurvey.setCreatedBy(userRepository.findByUsername("admin").orElse(null));
         
         // Add questions to employee survey
@@ -150,8 +150,8 @@ public class DataInitializer implements CommandLineRunner {
         productSurvey.setStatus(Survey.SurveyStatus.ACTIVE);
         productSurvey.setStartDate(LocalDateTime.now().minusDays(3));
         productSurvey.setEndDate(LocalDateTime.now().plusDays(21));
-        productSurvey.setAnonymous(false);
         productSurvey.setAllowMultipleResponses(true);
+        productSurvey.setRequireAuthentication(true);
         productSurvey.setCreatedBy(userRepository.findByUsername("admin").orElse(null));
         
         // Add questions to product survey
@@ -191,8 +191,8 @@ public class DataInitializer implements CommandLineRunner {
         customerSurvey.setStatus(Survey.SurveyStatus.SCHEDULED);
         customerSurvey.setStartDate(LocalDateTime.now().plusDays(7));
         customerSurvey.setEndDate(LocalDateTime.now().plusDays(45));
-        customerSurvey.setAnonymous(true);
         customerSurvey.setAllowMultipleResponses(false);
+        customerSurvey.setRequireAuthentication(true);
         customerSurvey.setCreatedBy(userRepository.findByUsername("admin").orElse(null));
         
         // Add questions to customer survey
@@ -230,8 +230,8 @@ public class DataInitializer implements CommandLineRunner {
         eventSurvey.setTitle("Annual Conference Feedback");
         eventSurvey.setDescription("Share your feedback about the recent annual conference to help us plan next year's event.");
         eventSurvey.setStatus(Survey.SurveyStatus.DRAFT);
-        eventSurvey.setAnonymous(false);
         eventSurvey.setAllowMultipleResponses(false);
+        eventSurvey.setRequireAuthentication(true);
         eventSurvey.setCreatedBy(userRepository.findByUsername("admin").orElse(null));
         
         // Add questions to event survey

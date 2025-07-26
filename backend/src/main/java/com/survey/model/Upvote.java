@@ -91,10 +91,18 @@ public class Upvote {
     public String toString() {
         return "Upvote{" +
                 "id=" + id +
-                ", userId=" + (user != null ? user.getId() : null) +
+                ", userId=" + getUserId() +
                 ", responseId=" + (response != null ? response.getId() : null) +
                 ", createdAt=" + createdAt +
                 '}';
+    }
+    
+    private Long getUserId() {
+        try {
+            return user != null ? user.getId() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     @Override
@@ -104,13 +112,13 @@ public class Upvote {
         
         Upvote upvote = (Upvote) o;
         
-        if (user != null ? !user.getId().equals(upvote.user.getId()) : upvote.user != null) return false;
+        if (user != null ? !getUserId().equals(upvote.getUserId()) : upvote.user != null) return false;
         return response != null ? response.getId().equals(upvote.response.getId()) : upvote.response == null;
     }
     
     @Override
     public int hashCode() {
-        int result = user != null ? user.getId().hashCode() : 0;
+        int result = getUserId() != null ? getUserId().hashCode() : 0;
         result = 31 * result + (response != null ? response.getId().hashCode() : 0);
         return result;
     }

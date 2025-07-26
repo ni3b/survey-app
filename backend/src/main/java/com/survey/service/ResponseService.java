@@ -45,13 +45,18 @@ public class ResponseService {
      * 
      * @param questionId the question ID
      * @param responseDto the response data
-     * @param userId the user ID (can be null for anonymous responses)
+     * @param userId the user ID (required for all responses)
      * @param ipAddress the IP address
      * @param userAgent the user agent
      * @return the created response
      */
     public Response submitResponse(Long questionId, ResponseDto responseDto, Long userId, 
                                  String ipAddress, String userAgent) {
+        // Require authentication for all responses
+        if (userId == null) {
+            throw new RuntimeException("Authentication required. User ID cannot be null.");
+        }
+        
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
         
@@ -62,29 +67,37 @@ public class ResponseService {
             throw new RuntimeException("Survey is not active");
         }
         
-        // Check if user has already responded (if not anonymous and multiple responses not allowed)
-        if (userId != null && !survey.isAllowMultipleResponses()) {
+        // Check if user has already responded (multiple responses not allowed)
+        if (!survey.isAllowMultipleResponses()) {
             List<Response> existingResponses = responseRepository.findByQuestionIdAndUserId(questionId, userId);
             if (!existingResponses.isEmpty()) {
                 throw new RuntimeException("User has already responded to this question");
             }
         }
         
+        // Get user (required for all responses)
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
         Response response = new Response();
         response.setText(responseDto.getText());
         response.setQuestion(question);
-        response.setAnonymous(responseDto.isAnonymous());
+        response.setUser(user);
         response.setIpAddress(ipAddress);
         response.setUserAgent(userAgent);
         
-        // Set user if not anonymous
-        if (userId != null && !responseDto.isAnonymous()) {
-            User user = userService.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            response.setUser(user);
-        }
-        
         return responseRepository.save(response);
+    }
+    
+    /**
+     * Get a question by ID.
+     * 
+     * @param questionId the question ID
+     * @return the question
+     */
+    public Question getQuestionById(Long questionId) {
+        return questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
     }
     
     /**
@@ -92,10 +105,11 @@ public class ResponseService {
      * 
      * @param questionId the question ID
      * @param responseDto the response data
+     * @param userId the user ID (required for all responses)
      * @return the created response DTO
      */
-    public ResponseDto createResponseDto(Long questionId, ResponseDto responseDto) {
-        Response response = submitResponse(questionId, responseDto, null, null, null);
+    public ResponseDto createResponseDto(Long questionId, ResponseDto responseDto, Long userId) {
+        Response response = submitResponse(questionId, responseDto, userId, null, null);
         return new ResponseDto(response, false);
     }
     
@@ -174,26 +188,30 @@ public class ResponseService {
     }
     
     /**
-     * Upvote a response (simplified version for anonymous users).
+     * Upvote a response.
      * 
      * @param responseId the response ID
-     * @param userId the user ID (can be null for anonymous)
+     * @param userId the user ID (required)
      */
     public void upvoteResponse(Long responseId, Long userId) {
-        if (userId != null) {
-            upvoteResponse(responseId, userId, null);
+        if (userId == null) {
+            throw new RuntimeException("Authentication required. User ID cannot be null.");
         }
-        // For anonymous users, we could implement IP-based tracking if needed
+        upvoteResponse(responseId, userId, null);
     }
     
     /**
      * Remove upvote from a response.
      * 
      * @param responseId the response ID
-     * @param userId the user ID
+     * @param userId the user ID (required)
      * @return true if upvote removal successful, false otherwise
      */
     public boolean removeUpvote(Long responseId, Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("Authentication required. User ID cannot be null.");
+        }
+        
         Optional<com.survey.model.Upvote> upvote = upvoteRepository.findByUserIdAndResponseId(userId, responseId);
         
         if (upvote.isPresent()) {
@@ -258,6 +276,18 @@ public class ResponseService {
     }
     
     /**
+     * Get overall response statistics.
+     * 
+     * @return overall response statistics
+     */
+    public ResponseStatistics getOverallResponseStatistics() {
+        long totalResponses = responseRepository.count();
+        long totalUpvotes = upvoteRepository.count();
+        
+        return new ResponseStatistics(totalResponses, totalUpvotes);
+    }
+
+    /**
      * Get response statistics for a survey.
      * 
      * @param surveyId the survey ID
@@ -275,11 +305,7 @@ public class ResponseService {
                 .mapToLong(Question::getTotalUpvotes)
                 .sum();
         
-        long anonymousResponses = survey.getQuestions().stream()
-                .mapToLong(q -> responseRepository.countByQuestionAndAnonymous(q, true))
-                .sum();
-        
-        return new ResponseStatistics(totalResponses, totalUpvotes, anonymousResponses);
+        return new ResponseStatistics(totalResponses, totalUpvotes);
     }
     
     /**
@@ -293,13 +319,10 @@ public class ResponseService {
         
         long totalResponses = responses.size();
         long totalUpvotes = responses.stream()
-                .mapToLong(response -> response.getUpvotes().size())
+                .mapToLong(response -> response.getUpvoteCount())
                 .sum();
-        long anonymousResponses = responses.stream()
-                .filter(Response::isAnonymous)
-                .count();
         
-        return new ResponseStatistics(totalResponses, totalUpvotes, anonymousResponses);
+        return new ResponseStatistics(totalResponses, totalUpvotes);
     }
     
     /**
@@ -340,18 +363,14 @@ public class ResponseService {
     public static class ResponseStatistics {
         private final long totalResponses;
         private final long totalUpvotes;
-        private final long anonymousResponses;
         
-        public ResponseStatistics(long totalResponses, long totalUpvotes, long anonymousResponses) {
+        public ResponseStatistics(long totalResponses, long totalUpvotes) {
             this.totalResponses = totalResponses;
             this.totalUpvotes = totalUpvotes;
-            this.anonymousResponses = anonymousResponses;
         }
         
         // Getters
         public long getTotalResponses() { return totalResponses; }
         public long getTotalUpvotes() { return totalUpvotes; }
-        public long getAnonymousResponses() { return anonymousResponses; }
-        public long getNamedResponses() { return totalResponses - anonymousResponses; }
     }
 } 

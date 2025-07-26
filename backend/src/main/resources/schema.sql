@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS surveys (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
-    is_anonymous BOOLEAN DEFAULT 0,
     allow_multiple_responses BOOLEAN DEFAULT 0,
+    require_authentication BOOLEAN DEFAULT 1,
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
@@ -52,7 +52,6 @@ CREATE TABLE IF NOT EXISTS responses (
     text TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_anonymous BOOLEAN DEFAULT 0,
     ip_address VARCHAR(45),
     user_agent TEXT,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,

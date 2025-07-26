@@ -12,9 +12,8 @@ import java.util.List;
  * 
  * This entity supports:
  * - Text responses to questions
- * - Anonymous responses
  * - Upvote system
- * - User association (optional for anonymous surveys)
+ * - User association (required for all responses)
  * 
  * @author Survey Team
  */
@@ -45,8 +44,7 @@ public class Response {
     @JoinColumn(name = "user_id")
     private User user;
     
-    @Column(name = "is_anonymous")
-    private boolean anonymous = false;
+
     
     @OneToMany(mappedBy = "response", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Upvote> upvotes = new ArrayList<>();
@@ -68,10 +66,7 @@ public class Response {
         this.text = text;
     }
     
-    public Response(String text, boolean anonymous) {
-        this(text);
-        this.anonymous = anonymous;
-    }
+
     
     // Getters and Setters
     public Long getId() {
@@ -122,13 +117,7 @@ public class Response {
         this.user = user;
     }
     
-    public boolean isAnonymous() {
-        return anonymous;
-    }
-    
-    public void setAnonymous(boolean anonymous) {
-        this.anonymous = anonymous;
-    }
+
     
     public List<Upvote> getUpvotes() {
         return upvotes;
@@ -156,30 +145,52 @@ public class Response {
     
     // Helper methods
     public void addUpvote(Upvote upvote) {
+        if (upvotes == null) {
+            upvotes = new ArrayList<>();
+        }
         upvotes.add(upvote);
         upvote.setResponse(this);
     }
     
     public void removeUpvote(Upvote upvote) {
-        upvotes.remove(upvote);
+        if (upvotes != null) {
+            upvotes.remove(upvote);
+        }
         upvote.setResponse(null);
     }
     
     public int getUpvoteCount() {
-        return upvotes.size();
+        try {
+            return upvotes != null ? upvotes.size() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
     
     public boolean hasUserUpvoted(User user) {
         if (user == null) return false;
-        return upvotes.stream()
-                .anyMatch(upvote -> user.getId().equals(upvote.getUser().getId()));
+        try {
+            if (upvotes == null) return false;
+            return upvotes.stream()
+                    .anyMatch(upvote -> {
+                        try {
+                            Long userId = user.getId();
+                            return userId != null && userId.equals(upvote.getUser().getId());
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    });
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     public String getAuthorDisplayName() {
-        if (anonymous) {
-            return "Anonymous";
+        try {
+            return user != null ? user.getUsername() : "Unknown";
+        } catch (Exception e) {
+            return "Unknown";
         }
-        return user != null ? user.getUsername() : "Unknown";
     }
     
     @PreUpdate
@@ -192,8 +203,7 @@ public class Response {
         return "Response{" +
                 "id=" + id +
                 ", text='" + text + '\'' +
-                ", anonymous=" + anonymous +
-                ", upvotesCount=" + (upvotes != null ? upvotes.size() : 0) +
+                ", upvotesCount=" + getUpvoteCount() +
                 ", createdAt=" + createdAt +
                 '}';
     }

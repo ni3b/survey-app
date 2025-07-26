@@ -1,5 +1,9 @@
 package com.survey.service;
 
+import com.survey.exception.SurveyAuthenticationException;
+import com.survey.exception.BusinessException;
+import com.survey.exception.ResourceNotFoundException;
+import com.survey.exception.ValidationException;
 import com.survey.model.User;
 import com.survey.repository.UserRepository;
 import org.slf4j.Logger;
@@ -37,21 +41,28 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         logger.debug("Loading user by username: {}", username);
         
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    logger.warn("User not found with username: {}", username);
-                    return new UsernameNotFoundException("User not found with username: " + username);
-                });
-        
-        logger.debug("User loaded successfully: {} with role: {}", username, user.getRole());
-        
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                user.isActive(),
-                true, true, true,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-        );
+        try {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", username));
+            
+            if (!user.isActive()) {
+                logger.warn("Inactive user attempted login: {}", username);
+                throw SurveyAuthenticationException.userInactive(username);
+            }
+            
+            logger.debug("User loaded successfully: {} with role: {}", username, user.getRole());
+            
+            return new org.springframework.security.core.userdetails.User(
+                    user.getUsername(),
+                    user.getPassword(),
+                    user.isActive(),
+                    true, true, true,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+            );
+        } catch (ResourceNotFoundException e) {
+            logger.warn("User not found with username: {}", username);
+            throw new UsernameNotFoundException("User not found with username: " + username, e);
+        }
     }
     
     /**
@@ -83,20 +94,40 @@ public class UserService implements UserDetailsService {
     public User createUser(User user) {
         logger.info("Creating new user: {}", user.getUsername());
         
-        // Encode password
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        logger.debug("Password encoded for user: {}", user.getUsername());
-        
-        // Set default role if not specified
-        if (user.getRole() == null) {
-            user.setRole(User.UserRole.USER);
-            logger.debug("Default role USER assigned to user: {}", user.getUsername());
+        try {
+            // Validate user data
+            validateUserData(user);
+            
+            // Check if username already exists
+            if (usernameExists(user.getUsername())) {
+                throw new BusinessException("Username already exists: " + user.getUsername());
+            }
+            
+            // Check if email already exists (if provided)
+            if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+                if (emailExists(user.getEmail())) {
+                    throw new BusinessException("Email already exists: " + user.getEmail());
+                }
+            }
+            
+            // Encode password
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            logger.debug("Password encoded for user: {}", user.getUsername());
+            
+            // Set default role if not specified
+            if (user.getRole() == null) {
+                user.setRole(User.UserRole.USER);
+                logger.debug("Default role USER assigned to user: {}", user.getUsername());
+            }
+            
+            User savedUser = userRepository.save(user);
+            logger.info("User created successfully: {} with role: {}", savedUser.getUsername(), savedUser.getRole());
+            
+            return savedUser;
+        } catch (Exception e) {
+            logger.error("Failed to create user: {} - {}", user.getUsername(), e.getMessage(), e);
+            throw e;
         }
-        
-        User savedUser = userRepository.save(user);
-        logger.info("User created successfully: {} with role: {}", savedUser.getUsername(), savedUser.getRole());
-        
-        return savedUser;
     }
     
     /**
@@ -324,5 +355,37 @@ public class UserService implements UserDetailsService {
      */
     public List<User> searchUsers(String searchTerm) {
         return userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(searchTerm, searchTerm);
+    }
+    
+    /**
+     * Validate user data before creation or update.
+     * 
+     * @param user the user to validate
+     * @throws ValidationException if validation fails
+     */
+    private void validateUserData(User user) {
+        ValidationException validationException = new ValidationException("User validation failed");
+        
+        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            validationException.addFieldError("username", "Username is required");
+        } else if (user.getUsername().length() < 3 || user.getUsername().length() > 50) {
+            validationException.addFieldError("username", "Username must be between 3 and 50 characters");
+        }
+        
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            validationException.addFieldError("password", "Password is required");
+        } else if (user.getPassword().length() < 6) {
+            validationException.addFieldError("password", "Password must be at least 6 characters");
+        }
+        
+        if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+            if (!user.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                validationException.addFieldError("email", "Invalid email format");
+            }
+        }
+        
+        if (validationException.hasFieldErrors()) {
+            throw validationException;
+        }
     }
 } 

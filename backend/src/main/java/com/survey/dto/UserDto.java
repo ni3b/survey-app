@@ -40,7 +40,12 @@ public class UserDto {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
-        this.role = user.getRole().name();
+        try {
+            this.role = user.getRole().name();
+        } catch (Exception e) {
+            // Handle any potential issues with role access
+            this.role = "USER";
+        }
         this.active = user.isActive();
         this.createdAt = user.getCreatedAt();
         this.lastLogin = user.getLastLogin();

@@ -43,17 +43,27 @@ public class QuestionDto {
         this.updatedAt = question.getUpdatedAt();
         this.maxResponses = question.getMaxResponses();
         this.allowMultipleAnswers = question.isAllowMultipleAnswers();
-        this.totalResponses = question.getResponses().size();
-        
-        if (question.getResponses() != null) {
-            this.responses = question.getResponses().stream()
-                    .map(ResponseDto::new)
-                    .toList();
+        try {
+            this.totalResponses = question.getResponses() != null ? question.getResponses().size() : 0;
             
-            // Get top 5 responses with most upvotes
-            this.topResponses = question.getTopResponses(5).stream()
-                    .map(ResponseDto::new)
-                    .toList();
+            if (question.getResponses() != null) {
+                this.responses = question.getResponses().stream()
+                        .map(ResponseDto::new)
+                        .toList();
+                
+                // Get top 5 responses with most upvotes
+                this.topResponses = question.getTopResponses(5).stream()
+                        .map(ResponseDto::new)
+                        .toList();
+            } else {
+                this.responses = List.of();
+                this.topResponses = List.of();
+            }
+        } catch (Exception e) {
+            // Handle LazyInitializationException
+            this.totalResponses = 0;
+            this.responses = List.of();
+            this.topResponses = List.of();
         }
     }
     

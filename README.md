@@ -5,10 +5,11 @@ A full-stack survey web application built with Spring Boot (backend) and React (
 ## Features
 
 ### User Features
+- User login with JWT authentication (accounts created by admin)
 - Browse and participate in active surveys
 - View questions one at a time or as a list
 - See top 5 responses with upvotes for each question
-- Submit new responses
+- Submit new responses (authentication required)
 - Upvote responses (one per user per response)
 - Real-time updates after interactions
 - Responsive design for desktop and mobile
@@ -18,6 +19,7 @@ A full-stack survey web application built with Spring Boot (backend) and React (
 - Dashboard with survey analytics
 - Survey management (create, edit, delete, schedule)
 - Question management within surveys
+- User management and account creation
 - Export survey data to CSV/Excel
 - View all responses and upvotes
 - Analytics and engagement trends
@@ -203,6 +205,37 @@ The application uses HS512 algorithm for JWT signing, which requires a minimum o
 - Automatic fallback to secure key generation if provided secret is too short
 - Warning logs when insecure secrets are detected
 - Backward compatibility with existing configurations
+
+## Authentication & Authorization
+
+### User Authentication
+The application requires authentication for all survey participation:
+
+**User Management:**
+- User accounts are created by administrators only
+- Passwords are securely hashed using BCrypt
+- Username and email uniqueness validation
+
+**User Login:**
+- JWT-based authentication with configurable token expiration
+- Automatic token validation and refresh
+- Secure password handling
+
+**Survey Authentication:**
+- All surveys require user authentication
+- Users must be logged in to participate in any survey
+
+### Admin Authentication
+- Separate admin login system
+- Role-based access control (ADMIN vs USER roles)
+- Admin users can access dashboard and management features
+
+### Security Features
+- JWT token validation and expiration
+- Password encryption with BCrypt
+- CORS configuration for cross-origin requests
+- Input validation and sanitization
+- SQL injection prevention through JPA/Hibernate
 
 ## Development
 

@@ -30,8 +30,9 @@ public class SurveyDto {
     private LocalDateTime updatedAt;
     private String createdBy;
     private List<QuestionDto> questions;
-    private boolean anonymous;
+
     private boolean allowMultipleResponses;
+    private boolean requireAuthentication;
     private int totalResponses;
     private int totalQuestions;
     
@@ -47,17 +48,30 @@ public class SurveyDto {
         this.endDate = survey.getEndDate();
         this.createdAt = survey.getCreatedAt();
         this.updatedAt = survey.getUpdatedAt();
-        this.anonymous = survey.isAnonymous();
+
         this.allowMultipleResponses = survey.isAllowMultipleResponses();
+        this.requireAuthentication = survey.isRequireAuthentication();
         this.totalQuestions = survey.getQuestions().size();
         
         // Calculate total responses across all questions
         this.totalResponses = survey.getQuestions().stream()
-                .mapToInt(question -> question.getResponses().size())
+                .mapToInt(question -> {
+                    try {
+                        return question.getResponses() != null ? question.getResponses().size() : 0;
+                    } catch (Exception e) {
+                        // Handle LazyInitializationException by returning 0
+                        return 0;
+                    }
+                })
                 .sum();
         
-        if (survey.getCreatedBy() != null) {
-            this.createdBy = survey.getCreatedBy().getUsername();
+        try {
+            if (survey.getCreatedBy() != null) {
+                this.createdBy = survey.getCreatedBy().getUsername();
+            }
+        } catch (Exception e) {
+            // Handle LazyInitializationException for User entity
+            this.createdBy = "Unknown";
         }
         
         if (survey.getQuestions() != null) {
@@ -148,13 +162,7 @@ public class SurveyDto {
         this.questions = questions;
     }
     
-    public boolean isAnonymous() {
-        return anonymous;
-    }
-    
-    public void setAnonymous(boolean anonymous) {
-        this.anonymous = anonymous;
-    }
+
     
     public boolean isAllowMultipleResponses() {
         return allowMultipleResponses;
@@ -162,6 +170,14 @@ public class SurveyDto {
     
     public void setAllowMultipleResponses(boolean allowMultipleResponses) {
         this.allowMultipleResponses = allowMultipleResponses;
+    }
+    
+    public boolean isRequireAuthentication() {
+        return requireAuthentication;
+    }
+    
+    public void setRequireAuthentication(boolean requireAuthentication) {
+        this.requireAuthentication = requireAuthentication;
     }
     
     public int getTotalResponses() {

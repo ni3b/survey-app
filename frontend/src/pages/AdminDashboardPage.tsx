@@ -50,9 +50,9 @@ const AdminDashboardPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [statistics, setStatistics] = useState<{
-    survey: SurveyStatistics;
-    response: ResponseStatistics;
-    user: UserStatistics;
+    surveyStats: SurveyStatistics;
+    responseStats: ResponseStatistics;
+    userStats: UserStatistics;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,9 +134,9 @@ const AdminDashboardPage: React.FC = () => {
   };
 
   const chartData = statistics ? [
-    { name: 'Active', value: statistics.survey.activeSurveys, color: '#4caf50' },
-    { name: 'Draft', value: statistics.survey.draftSurveys, color: '#ff9800' },
-    { name: 'Closed', value: statistics.survey.closedSurveys, color: '#f44336' },
+    { name: 'Active', value: statistics.surveyStats.activeSurveys, color: '#4caf50' },
+    { name: 'Draft', value: statistics.surveyStats.draftSurveys, color: '#ff9800' },
+    { name: 'Closed', value: statistics.surveyStats.closedSurveys, color: '#f44336' },
   ] : [];
 
   if (loading) {
@@ -191,7 +191,7 @@ const AdminDashboardPage: React.FC = () => {
                   <Assessment sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
                   <Box>
                     <Typography variant="h4" component="div">
-                      {statistics.survey.totalSurveys}
+                      {statistics.surveyStats.totalSurveys}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total Surveys
@@ -209,7 +209,7 @@ const AdminDashboardPage: React.FC = () => {
                   <TrendingUp sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
                   <Box>
                     <Typography variant="h4" component="div">
-                      {statistics.response.totalResponses}
+                      {statistics.responseStats.totalResponses}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total Responses
@@ -227,7 +227,7 @@ const AdminDashboardPage: React.FC = () => {
                   <People sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
                   <Box>
                     <Typography variant="h4" component="div">
-                      {statistics.user.totalUsers}
+                      {statistics.userStats.totalUsers}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total Users
@@ -245,7 +245,7 @@ const AdminDashboardPage: React.FC = () => {
                   <Schedule sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
                   <Box>
                     <Typography variant="h4" component="div">
-                      {statistics.survey.activeSurveys}
+                      {statistics.surveyStats.activeSurveys}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Active Surveys

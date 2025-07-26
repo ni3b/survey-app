@@ -35,16 +35,17 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 import { surveyService } from '../services/surveyService';
+import { useAuth } from '../context/AuthContext';
 import { Survey, Question } from '../types';
 
 const SurveyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [responses, setResponses] = useState<{ [questionId: number]: string }>({});
-  const [anonymous, setAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -89,6 +90,17 @@ const SurveyDetailPage: React.FC = () => {
   const handleSubmit = async () => {
     if (!survey) return;
     
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      const shouldLogin = window.confirm(
+        'Authentication required. Would you like to log in to participate?'
+      );
+      if (shouldLogin) {
+        navigate('/login');
+      }
+      return;
+    }
+    
     try {
       setSubmitting(true);
       
@@ -96,8 +108,7 @@ const SurveyDetailPage: React.FC = () => {
       for (const [questionId, responseText] of Object.entries(responses)) {
         if (typeof responseText === 'string' && responseText.trim()) {
           await surveyService.submitResponse(parseInt(questionId), {
-            text: responseText,
-            anonymous
+            text: responseText
           });
         }
       }
@@ -108,9 +119,20 @@ const SurveyDetailPage: React.FC = () => {
       setResponses({});
       
       alert('Your responses have been submitted successfully!');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting responses:', err);
-      alert('Failed to submit responses. Please try again.');
+      
+      // Handle authentication error
+      if (err.message && err.message.includes('authentication')) {
+        const shouldLogin = window.confirm(
+          'This survey requires authentication. Would you like to log in to participate?'
+        );
+        if (shouldLogin) {
+          navigate('/login');
+        }
+      } else {
+        alert('Failed to submit responses. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -211,7 +233,7 @@ const SurveyDetailPage: React.FC = () => {
               secondary={
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <Typography variant="caption" color="text.secondary">
-                    {response.anonymous ? 'Anonymous' : response.authorName}
+                    {response.authorName}
                   </Typography>
                   <Box sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
                     <IconButton
@@ -279,13 +301,38 @@ const SurveyDetailPage: React.FC = () => {
             label={`${survey.totalResponses} responses`}
             variant="outlined"
           />
-          <Chip
-            icon={<Person />}
-            label={survey.anonymous ? 'Anonymous' : 'Named responses'}
-            variant="outlined"
-          />
+
+          {survey.requireAuthentication && (
+            <Chip
+              icon={<Person />}
+              label="Login Required"
+              color="warning"
+              variant="outlined"
+            />
+          )}
         </Box>
       </Paper>
+
+      {/* Authentication Notice */}
+      {!isAuthenticated && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <Typography variant="body1" gutterBottom>
+            <strong>Authentication Required</strong>
+          </Typography>
+          <Typography variant="body2">
+            You must be logged in to participate in surveys. Please{' '}
+            <Button
+              variant="text"
+              color="primary"
+              onClick={() => navigate('/login')}
+              sx={{ p: 0, minWidth: 'auto', textTransform: 'none' }}
+            >
+              sign in
+            </Button>{' '}
+            to continue.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Questions */}
       <Grid container spacing={3}>
@@ -316,16 +363,6 @@ const SurveyDetailPage: React.FC = () => {
           {/* Submit Section */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={anonymous}
-                    onChange={(e) => setAnonymous(e.target.checked)}
-                  />
-                }
-                label="Submit responses anonymously"
-              />
-              
               <Box sx={{ mt: 2 }}>
                 <Button
                   variant="contained"

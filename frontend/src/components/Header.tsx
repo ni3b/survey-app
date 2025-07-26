@@ -46,29 +46,33 @@ const Header: React.FC = () => {
               Surveys
             </Button>
 
-            {isAuthenticated && isAdmin ? (
+            {isAuthenticated ? (
               <>
-                <Button
-                  color="inherit"
-                  component={RouterLink}
-                  to="/admin/dashboard"
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  color="inherit"
-                  component={RouterLink}
-                  to="/admin/users"
-                >
-                  Users
-                </Button>
-                <Button
-                  color="inherit"
-                  component={RouterLink}
-                  to="/admin/surveys/create"
-                >
-                  Create Survey
-                </Button>
+                {isAdmin && (
+                  <>
+                    <Button
+                      color="inherit"
+                      component={RouterLink}
+                      to="/admin/dashboard"
+                    >
+                      Dashboard
+                    </Button>
+                    <Button
+                      color="inherit"
+                      component={RouterLink}
+                      to="/admin/users"
+                    >
+                      Users
+                    </Button>
+                    <Button
+                      color="inherit"
+                      component={RouterLink}
+                      to="/admin/surveys/create"
+                    >
+                      Create Survey
+                    </Button>
+                  </>
+                )}
                 <Button
                   color="inherit"
                   onClick={handleLogout}
@@ -77,13 +81,22 @@ const Header: React.FC = () => {
                 </Button>
               </>
             ) : (
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/admin/login"
-              >
-                Admin Login
-              </Button>
+              <>
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/login"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/admin/login"
+                >
+                  Admin Login
+                </Button>
+              </>
             )}
           </Box>
         </Toolbar>

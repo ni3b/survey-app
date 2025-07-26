@@ -52,19 +52,7 @@ public interface ResponseRepository extends JpaRepository<Response, Long> {
      */
     List<Response> findByUserId(Long userId);
     
-    /**
-     * Find anonymous responses.
-     * 
-     * @return List of anonymous responses
-     */
-    List<Response> findByAnonymousTrue();
-    
-    /**
-     * Find non-anonymous responses.
-     * 
-     * @return List of non-anonymous responses
-     */
-    List<Response> findByAnonymousFalse();
+
     
     /**
      * Find responses by question and user.
@@ -154,14 +142,7 @@ public interface ResponseRepository extends JpaRepository<Response, Long> {
      */
     List<Response> findByIpAddress(String ipAddress);
     
-    /**
-     * Count responses by question and anonymous status.
-     * 
-     * @param question the question to count responses for
-     * @param anonymous the anonymous status to filter by
-     * @return number of responses matching the criteria
-     */
-    long countByQuestionAndAnonymous(Question question, boolean anonymous);
+
     
     /**
      * Find responses that have been upvoted by a specific user.
@@ -182,4 +163,13 @@ public interface ResponseRepository extends JpaRepository<Response, Long> {
     @Query("SELECT r FROM Response r WHERE r NOT IN " +
            "(SELECT u.response FROM Upvote u WHERE u.user = :user)")
     List<Response> findResponsesNotUpvotedByUser(@Param("user") User user);
+    
+    /**
+     * Find responses for questions in a survey.
+     * 
+     * @param surveyId the survey ID
+     * @return List of responses for the survey's questions
+     */
+    @Query("SELECT r FROM Response r WHERE r.question.survey.id = :surveyId")
+    List<Response> findResponsesBySurveyId(@Param("surveyId") Long surveyId);
 } 

@@ -4,8 +4,11 @@ import com.survey.dto.AuthDto;
 import com.survey.dto.QuestionDto;
 import com.survey.dto.ResponseDto;
 import com.survey.dto.SurveyDto;
+import com.survey.model.User;
+import com.survey.security.JwtTokenProvider;
 import com.survey.service.ResponseService;
 import com.survey.service.SurveyService;
+import com.survey.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +39,12 @@ public class SurveyController {
     
     @Autowired
     private ResponseService responseService;
+    
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+    
+    @Autowired
+    private UserService userService;
     
     /**
      * Get all active surveys.
@@ -126,6 +135,17 @@ public class SurveyController {
         try {
             // Extract user ID from JWT token if available
             Long userId = extractUserIdFromRequest(request);
+            
+            // Check if survey requires authentication
+            var question = responseService.getQuestionById(questionId);
+            var survey = question.getSurvey();
+            
+            // All surveys now require authentication
+            if (userId == null) {
+                return ResponseEntity.status(401)
+                        .body(new AuthDto.ErrorResponse("UNAUTHORIZED", 
+                                "Authentication required. Please log in to submit responses.", 401));
+            }
             
             String ipAddress = getClientIpAddress(request);
             String userAgent = request.getHeader("User-Agent");
@@ -236,13 +256,19 @@ public class SurveyController {
      * @return user ID or null if not found
      */
     private Long extractUserIdFromRequest(HttpServletRequest request) {
-        // This is a simplified implementation
-        // In a real application, you would extract the user ID from the JWT token
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            // For now, return null to indicate anonymous user
-            // In a real implementation, you would decode the JWT and extract user ID
-            return null;
+            try {
+                String token = authHeader.substring(7);
+                if (tokenProvider.validateToken(token)) {
+                    String username = tokenProvider.getUsernameFromJWT(token);
+                    return userService.findByUsername(username)
+                            .map(User::getId)
+                            .orElse(null);
+                }
+            } catch (Exception e) {
+                logger.debug("Error extracting user ID from JWT token", e);
+            }
         }
         return null;
     }

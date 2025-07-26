@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface for Survey entity.
@@ -22,12 +23,78 @@ import java.util.List;
 public interface SurveyRepository extends JpaRepository<Survey, Long> {
     
     /**
+     * Find all surveys with questions and responses eagerly fetched.
+     * 
+     * @return List of all surveys with questions and responses
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q")
+    List<Survey> findAllWithQuestions();
+    
+    /**
+     * Find all surveys with questions and responses eagerly fetched.
+     * Note: This method fetches questions and responses separately to avoid MultipleBagFetchException.
+     * 
+     * @return List of all surveys with questions and responses
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "LEFT JOIN FETCH q.responses r")
+    List<Survey> findAllWithQuestionsAndResponses();
+    
+    /**
+     * Find survey by ID with questions eagerly fetched.
+     * 
+     * @param id the survey ID
+     * @return Optional containing the survey with questions if found
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "WHERE s.id = :id")
+    Optional<Survey> findByIdWithQuestions(@Param("id") Long id);
+    
+    /**
+     * Find survey by ID with questions and responses eagerly fetched.
+     * 
+     * @param id the survey ID
+     * @return Optional containing the survey with questions and responses if found
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "LEFT JOIN FETCH q.responses r " +
+           "WHERE s.id = :id")
+    Optional<Survey> findByIdWithQuestionsAndResponses(@Param("id") Long id);
+    
+    /**
      * Find surveys by status.
      * 
      * @param status the status to filter by
      * @return List of surveys with the specified status
      */
     List<Survey> findByStatus(Survey.SurveyStatus status);
+    
+    /**
+     * Find surveys by status with questions eagerly fetched.
+     * 
+     * @param status the status to filter by
+     * @return List of surveys with the specified status and questions
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "WHERE s.status = :status")
+    List<Survey> findByStatusWithQuestions(@Param("status") Survey.SurveyStatus status);
+    
+    /**
+     * Find surveys by status with questions and responses eagerly fetched.
+     * 
+     * @param status the status to filter by
+     * @return List of surveys with the specified status and questions/responses
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "LEFT JOIN FETCH q.responses r " +
+           "WHERE s.status = :status")
+    List<Survey> findByStatusWithQuestionsAndResponses(@Param("status") Survey.SurveyStatus status);
     
     /**
      * Find active surveys (currently running).
@@ -38,6 +105,19 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
            "AND (s.startDate IS NULL OR s.startDate <= :now) " +
            "AND (s.endDate IS NULL OR s.endDate >= :now)")
     List<Survey> findActiveSurveys(@Param("now") LocalDateTime now);
+    
+    /**
+     * Find active surveys with questions and responses eagerly fetched.
+     * 
+     * @return List of active surveys with questions and responses
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "LEFT JOIN FETCH q.responses r " +
+           "WHERE s.status = 'ACTIVE' " +
+           "AND (s.startDate IS NULL OR s.startDate <= :now) " +
+           "AND (s.endDate IS NULL OR s.endDate >= :now)")
+    List<Survey> findActiveSurveysWithQuestionsAndResponses(@Param("now") LocalDateTime now);
     
     /**
      * Find surveys created by a specific user.
@@ -116,6 +196,18 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
     List<Survey> findByTitleContainingIgnoreCase(String title);
     
     /**
+     * Find surveys by title containing the search term with questions and responses eagerly fetched.
+     * 
+     * @param title the search term
+     * @return List of surveys with matching titles and questions/responses
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "LEFT JOIN FETCH q.responses r " +
+           "WHERE LOWER(s.title) LIKE LOWER(CONCAT('%', :title, '%'))")
+    List<Survey> findByTitleContainingIgnoreCaseWithQuestionsAndResponses(@Param("title") String title);
+    
+    /**
      * Find surveys by description containing the search term.
      * 
      * @param description the search term
@@ -123,12 +215,7 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
      */
     List<Survey> findByDescriptionContainingIgnoreCase(String description);
     
-    /**
-     * Find anonymous surveys.
-     * 
-     * @return List of anonymous surveys
-     */
-    List<Survey> findByAnonymousTrue();
+
     
     /**
      * Find surveys that allow multiple responses.
@@ -164,4 +251,19 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
      * @return Page of surveys matching the criteria
      */
     Page<Survey> findByStatusAndTitleContainingIgnoreCase(Survey.SurveyStatus status, String title, Pageable pageable);
+    
+    /**
+     * Find surveys by status and title containing the search term with questions and responses eagerly fetched.
+     * 
+     * @param status the status to filter by
+     * @param title the search term
+     * @return List of surveys matching the criteria with questions/responses
+     */
+    @Query("SELECT DISTINCT s FROM Survey s " +
+           "LEFT JOIN FETCH s.questions q " +
+           "LEFT JOIN FETCH q.responses r " +
+           "WHERE s.status = :status " +
+           "AND LOWER(s.title) LIKE LOWER(CONCAT('%', :title, '%'))")
+    List<Survey> findByStatusAndTitleContainingIgnoreCaseWithQuestionsAndResponses(
+        @Param("status") Survey.SurveyStatus status, @Param("title") String title);
 } 

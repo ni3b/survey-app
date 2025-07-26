@@ -208,7 +208,6 @@ The application supports exporting survey data to CSV format:
 - All responses for a survey
 - Question-wise response breakdown
 - Upvote statistics
-- Anonymous response handling
 
 ## Testing
 

@@ -10,8 +10,8 @@ export interface Survey {
   updatedAt: string;
   createdBy: string | null;
   questions: Question[];
-  anonymous: boolean;
   allowMultipleResponses: boolean;
+  requireAuthentication: boolean;
   totalResponses: number;
   totalQuestions: number;
 }
@@ -40,7 +40,6 @@ export interface Response {
   updatedAt: string;
   questionId: number;
   authorName: string;
-  anonymous: boolean;
   upvoteCount: number;
   hasUserUpvoted: boolean;
 }
@@ -96,8 +95,6 @@ export interface SurveyStatistics {
 export interface ResponseStatistics {
   totalResponses: number;
   totalUpvotes: number;
-  anonymousResponses: number;
-  namedResponses: number;
 }
 
 export interface UserStatistics {
@@ -113,8 +110,8 @@ export interface SurveyFormData {
   status: string;
   startDate: string | null;
   endDate: string | null;
-  anonymous: boolean;
   allowMultipleResponses: boolean;
+  requireAuthentication: boolean;
   questions?: QuestionFormData[];
 }
 
@@ -129,5 +126,4 @@ export interface QuestionFormData {
 
 export interface ResponseFormData {
   text: string;
-  anonymous: boolean;
 } 

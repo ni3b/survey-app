@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Survey entity representing a survey with questions and responses.
@@ -57,13 +57,15 @@ public class Survey {
     
     @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
-    private List<Question> questions = new ArrayList<>();
+    private Set<Question> questions = new HashSet<>();
     
-    @Column(name = "is_anonymous")
-    private boolean anonymous = false;
+
     
     @Column(name = "allow_multiple_responses")
     private boolean allowMultipleResponses = false;
+    
+    @Column(name = "require_authentication")
+    private boolean requireAuthentication = false;
     
     // Constructors
     public Survey() {
@@ -150,21 +152,15 @@ public class Survey {
         this.createdBy = createdBy;
     }
     
-    public List<Question> getQuestions() {
+    public Set<Question> getQuestions() {
         return questions;
     }
     
-    public void setQuestions(List<Question> questions) {
+    public void setQuestions(Set<Question> questions) {
         this.questions = questions;
     }
     
-    public boolean isAnonymous() {
-        return anonymous;
-    }
-    
-    public void setAnonymous(boolean anonymous) {
-        this.anonymous = anonymous;
-    }
+
     
     public boolean isAllowMultipleResponses() {
         return allowMultipleResponses;
@@ -172,6 +168,14 @@ public class Survey {
     
     public void setAllowMultipleResponses(boolean allowMultipleResponses) {
         this.allowMultipleResponses = allowMultipleResponses;
+    }
+    
+    public boolean isRequireAuthentication() {
+        return requireAuthentication;
+    }
+    
+    public void setRequireAuthentication(boolean requireAuthentication) {
+        this.requireAuthentication = requireAuthentication;
     }
     
     // Helper methods

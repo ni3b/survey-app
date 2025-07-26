@@ -2,17 +2,22 @@ package com.survey.service;
 
 import com.survey.dto.SurveyDto;
 import com.survey.model.Question;
+import com.survey.model.Response;
 import com.survey.model.Survey;
 import com.survey.model.User;
+import com.survey.repository.ResponseRepository;
 import com.survey.repository.SurveyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 /**
@@ -25,6 +30,9 @@ public class SurveyService {
     
     @Autowired
     private SurveyRepository surveyRepository;
+    
+    @Autowired
+    private ResponseRepository responseRepository;
     
     @Autowired
     private UserService userService;
@@ -44,9 +52,24 @@ public class SurveyService {
      * @return list of survey DTOs
      */
     public List<SurveyDto> getAllSurveyDtos() {
-        return surveyRepository.findAll().stream()
-                .map(SurveyDto::new)
-                .collect(Collectors.toList());
+        return getAllSurveyDtosWithResponses();
+    }
+    
+    /**
+     * Get all surveys as DTOs with responses.
+     * This method fetches questions and responses separately to avoid MultipleBagFetchException.
+     * 
+     * @return list of survey DTOs with responses
+     */
+    public List<SurveyDto> getAllSurveyDtosWithResponses() {
+        List<Survey> surveys = surveyRepository.findAllWithQuestionsAndResponses();
+        List<SurveyDto> surveyDtos = new ArrayList<>();
+        
+        for (Survey survey : surveys) {
+            surveyDtos.add(new SurveyDto(survey));
+        }
+        
+        return surveyDtos;
     }
     
     /**
@@ -66,8 +89,23 @@ public class SurveyService {
      * @return Optional containing the survey DTO if found
      */
     public Optional<SurveyDto> getSurveyDtoById(Long id) {
-        return surveyRepository.findById(id)
-                .map(SurveyDto::new);
+        return getSurveyDtoByIdWithResponses(id);
+    }
+    
+    /**
+     * Get survey DTO by ID with responses.
+     * This method fetches questions and responses separately to avoid MultipleBagFetchException.
+     * 
+     * @param id the survey ID
+     * @return Optional containing the survey DTO with responses if found
+     */
+    public Optional<SurveyDto> getSurveyDtoByIdWithResponses(Long id) {
+        Optional<Survey> surveyOpt = surveyRepository.findByIdWithQuestionsAndResponses(id);
+        if (surveyOpt.isPresent()) {
+            Survey survey = surveyOpt.get();
+            return Optional.of(new SurveyDto(survey));
+        }
+        return Optional.empty();
     }
     
     /**
@@ -85,9 +123,14 @@ public class SurveyService {
      * @return list of active survey DTOs
      */
     public List<SurveyDto> getActiveSurveyDtos() {
-        return getActiveSurveys().stream()
-                .map(SurveyDto::new)
-                .collect(Collectors.toList());
+        List<Survey> surveys = surveyRepository.findActiveSurveysWithQuestionsAndResponses(LocalDateTime.now());
+        List<SurveyDto> surveyDtos = new ArrayList<>();
+        
+        for (Survey survey : surveys) {
+            surveyDtos.add(new SurveyDto(survey));
+        }
+        
+        return surveyDtos;
     }
     
     /**
@@ -117,9 +160,9 @@ public class SurveyService {
      * 
      * @param surveyDto the survey data
      * @param creatorId the creator's user ID
-     * @return the created survey
+     * @return the created survey DTO
      */
-    public Survey createSurvey(SurveyDto surveyDto, Long creatorId) {
+    public SurveyDto createSurvey(SurveyDto surveyDto, Long creatorId) {
         User creator = userService.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("Creator not found"));
         
@@ -129,11 +172,12 @@ public class SurveyService {
         survey.setStatus(Survey.SurveyStatus.valueOf(surveyDto.getStatus()));
         survey.setStartDate(surveyDto.getStartDate());
         survey.setEndDate(surveyDto.getEndDate());
-        survey.setAnonymous(surveyDto.isAnonymous());
         survey.setAllowMultipleResponses(surveyDto.isAllowMultipleResponses());
+        survey.setRequireAuthentication(surveyDto.isRequireAuthentication());
         survey.setCreatedBy(creator);
         
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
@@ -141,9 +185,9 @@ public class SurveyService {
      * 
      * @param id the survey ID
      * @param surveyDto the updated survey data
-     * @return the updated survey
+     * @return the updated survey DTO
      */
-    public Survey updateSurvey(Long id, SurveyDto surveyDto) {
+    public SurveyDto updateSurvey(Long id, SurveyDto surveyDto) {
         Survey survey = surveyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Survey not found"));
         
@@ -156,10 +200,11 @@ public class SurveyService {
         survey.setDescription(surveyDto.getDescription());
         survey.setStartDate(surveyDto.getStartDate());
         survey.setEndDate(surveyDto.getEndDate());
-        survey.setAnonymous(surveyDto.isAnonymous());
         survey.setAllowMultipleResponses(surveyDto.isAllowMultipleResponses());
+        survey.setRequireAuthentication(surveyDto.isRequireAuthentication());
         
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
@@ -183,9 +228,9 @@ public class SurveyService {
      * Publish a survey (change status to ACTIVE).
      * 
      * @param id the survey ID
-     * @return the published survey
+     * @return the published survey DTO
      */
-    public Survey publishSurvey(Long id) {
+    public SurveyDto publishSurvey(Long id) {
         Survey survey = surveyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Survey not found"));
         
@@ -194,7 +239,8 @@ public class SurveyService {
         }
         
         survey.setStatus(Survey.SurveyStatus.ACTIVE);
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
@@ -202,29 +248,31 @@ public class SurveyService {
      * 
      * @param id the survey ID
      * @param startDate the start date
-     * @return the scheduled survey
+     * @return the scheduled survey DTO
      */
-    public Survey scheduleSurvey(Long id, LocalDateTime startDate) {
+    public SurveyDto scheduleSurvey(Long id, LocalDateTime startDate) {
         Survey survey = surveyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Survey not found"));
         
         survey.setStatus(Survey.SurveyStatus.SCHEDULED);
         survey.setStartDate(startDate);
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
      * Close a survey.
      * 
      * @param id the survey ID
-     * @return the closed survey
+     * @return the closed survey DTO
      */
-    public Survey closeSurvey(Long id) {
+    public SurveyDto closeSurvey(Long id) {
         Survey survey = surveyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Survey not found"));
         
         survey.setStatus(Survey.SurveyStatus.CLOSED);
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
@@ -232,9 +280,9 @@ public class SurveyService {
      * 
      * @param surveyId the survey ID
      * @param question the question to add
-     * @return the updated survey
+     * @return the updated survey DTO
      */
-    public Survey addQuestionToSurvey(Long surveyId, Question question) {
+    public SurveyDto addQuestionToSurvey(Long surveyId, Question question) {
         Survey survey = surveyRepository.findById(surveyId)
                 .orElseThrow(() -> new RuntimeException("Survey not found"));
         
@@ -243,7 +291,8 @@ public class SurveyService {
         }
         
         survey.addQuestion(question);
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
@@ -251,9 +300,9 @@ public class SurveyService {
      * 
      * @param surveyId the survey ID
      * @param questionId the question ID
-     * @return the updated survey
+     * @return the updated survey DTO
      */
-    public Survey removeQuestionFromSurvey(Long surveyId, Long questionId) {
+    public SurveyDto removeQuestionFromSurvey(Long surveyId, Long questionId) {
         Survey survey = surveyRepository.findById(surveyId)
                 .orElseThrow(() -> new RuntimeException("Survey not found"));
         
@@ -267,7 +316,8 @@ public class SurveyService {
                 .orElseThrow(() -> new RuntimeException("Question not found in survey"));
         
         survey.removeQuestion(questionToRemove);
-        return surveyRepository.save(survey);
+        Survey savedSurvey = surveyRepository.save(survey);
+        return new SurveyDto(savedSurvey);
     }
     
     /**
@@ -311,25 +361,34 @@ public class SurveyService {
      * @return page of survey DTOs
      */
     public Page<SurveyDto> getSurveysWithPagination(Pageable pageable, String status, String title) {
-        Page<Survey> surveys;
+        List<Survey> surveys;
         
         if (status != null && !status.isEmpty() && title != null && !title.isEmpty()) {
             // Filter by both status and title
-            surveys = surveyRepository.findByStatusAndTitleContainingIgnoreCase(
-                Survey.SurveyStatus.valueOf(status.toUpperCase()), title, pageable);
+            surveys = surveyRepository.findByStatusAndTitleContainingIgnoreCaseWithQuestionsAndResponses(
+                Survey.SurveyStatus.valueOf(status.toUpperCase()), title);
         } else if (status != null && !status.isEmpty()) {
             // Filter by status only
-            surveys = surveyRepository.findByStatus(
-                Survey.SurveyStatus.valueOf(status.toUpperCase()), pageable);
+            surveys = surveyRepository.findByStatusWithQuestionsAndResponses(
+                Survey.SurveyStatus.valueOf(status.toUpperCase()));
         } else if (title != null && !title.isEmpty()) {
             // Filter by title only
-            surveys = surveyRepository.findByTitleContainingIgnoreCase(title, pageable);
+            surveys = surveyRepository.findByTitleContainingIgnoreCaseWithQuestionsAndResponses(title);
         } else {
             // No filters
-            surveys = surveyRepository.findAll(pageable);
+            surveys = surveyRepository.findAllWithQuestionsAndResponses();
         }
         
-        return surveys.map(SurveyDto::new);
+        // Apply pagination manually since we're using JOIN FETCH
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), surveys.size());
+        
+        List<Survey> pagedSurveys = surveys.subList(start, end);
+        List<SurveyDto> surveyDtos = pagedSurveys.stream()
+                .map(SurveyDto::new)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(surveyDtos, pageable, surveys.size());
     }
     
     /**

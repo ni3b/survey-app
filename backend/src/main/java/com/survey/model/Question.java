@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Question entity representing a question within a survey.
@@ -53,7 +54,7 @@ public class Question {
     
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt DESC")
-    private List<Response> responses = new ArrayList<>();
+    private Set<Response> responses = new HashSet<>();
     
     @Column(name = "max_responses")
     private Integer maxResponses;
@@ -138,11 +139,11 @@ public class Question {
         this.survey = survey;
     }
     
-    public List<Response> getResponses() {
+    public Set<Response> getResponses() {
         return responses;
     }
     
-    public void setResponses(List<Response> responses) {
+    public void setResponses(Set<Response> responses) {
         this.responses = responses;
     }
     
@@ -164,26 +165,47 @@ public class Question {
     
     // Helper methods
     public void addResponse(Response response) {
+        if (responses == null) {
+            responses = new HashSet<>();
+        }
         responses.add(response);
         response.setQuestion(this);
     }
     
     public void removeResponse(Response response) {
-        responses.remove(response);
+        if (responses != null) {
+            responses.remove(response);
+        }
         response.setQuestion(null);
     }
     
     public List<Response> getTopResponses(int limit) {
-        return responses.stream()
-                .sorted((r1, r2) -> Integer.compare(r2.getUpvotes().size(), r1.getUpvotes().size()))
-                .limit(limit)
-                .toList();
+        try {
+            if (responses == null) {
+                return List.of();
+            }
+            return responses.stream()
+                    .sorted((r1, r2) -> Integer.compare(r2.getUpvoteCount(), r1.getUpvoteCount()))
+                    .limit(limit)
+                    .toList();
+        } catch (Exception e) {
+            // Handle LazyInitializationException
+            return List.of();
+        }
     }
     
     public int getTotalUpvotes() {
-        return responses.stream()
-                .mapToInt(response -> response.getUpvotes().size())
-                .sum();
+        try {
+            if (responses == null) {
+                return 0;
+            }
+            return responses.stream()
+                    .mapToInt(response -> response.getUpvoteCount())
+                    .sum();
+        } catch (Exception e) {
+            // Handle LazyInitializationException
+            return 0;
+        }
     }
     
     @PreUpdate
@@ -199,8 +221,16 @@ public class Question {
                 ", type=" + type +
                 ", orderIndex=" + orderIndex +
                 ", required=" + required +
-                ", responsesCount=" + (responses != null ? responses.size() : 0) +
+                ", responsesCount=" + getResponsesCount() +
                 '}';
+    }
+    
+    private int getResponsesCount() {
+        try {
+            return responses != null ? responses.size() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
     
     /**

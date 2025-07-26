@@ -48,8 +48,8 @@ const AdminSurveyCreatePage: React.FC = () => {
     status: 'DRAFT',
     startDate: null,
     endDate: null,
-    anonymous: false,
     allowMultipleResponses: false,
+    requireAuthentication: true,
   });
 
   const [questions, setQuestions] = useState<QuestionFormData[]>([]);
@@ -243,12 +243,12 @@ const AdminSurveyCreatePage: React.FC = () => {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={surveyData.anonymous}
-                        onChange={(e) => handleSurveyChange('anonymous', e.target.checked)}
+                        checked={surveyData.requireAuthentication}
+                        onChange={(e) => handleSurveyChange('requireAuthentication', e.target.checked)}
                         disabled={loading}
                       />
                     }
-                    label="Allow anonymous responses"
+                    label="Require user authentication"
                   />
                   <FormControlLabel
                     control={
