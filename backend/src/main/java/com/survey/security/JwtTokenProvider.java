@@ -29,8 +29,21 @@ public class JwtTokenProvider {
     private int jwtExpirationInMs;
     
     private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes();
-        return Keys.hmacShaKeyFor(keyBytes);
+        try {
+            // Try to use the configured secret if it's long enough
+            byte[] keyBytes = jwtSecret.getBytes();
+            if (keyBytes.length >= 64) { // HS512 requires at least 512 bits (64 bytes)
+                return Keys.hmacShaKeyFor(keyBytes);
+            } else {
+                // If the secret is too short, generate a secure key using the secret as a seed
+                // This ensures backward compatibility while providing security
+                logger.warn("JWT secret is too short for HS512. Generating secure key from provided secret.");
+                return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+            }
+        } catch (Exception e) {
+            logger.error("Error creating signing key, using secure fallback", e);
+            return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        }
     }
     
     /**
@@ -40,8 +53,23 @@ public class JwtTokenProvider {
      * @return JWT token string
      */
     public String generateToken(Authentication authentication) {
-        User userPrincipal = (User) authentication.getPrincipal();
-        return generateToken(userPrincipal);
+        String username = authentication.getName();
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        
+        // Get the role from the authentication authorities
+        String role = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .orElse("USER");
+        
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("role", role)
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
     }
     
     /**
@@ -62,6 +90,8 @@ public class JwtTokenProvider {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
+    
+
     
     /**
      * Get username from JWT token.

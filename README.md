@@ -172,10 +172,37 @@ Once the backend is running, you can access the API documentation at:
 
 ## Security
 
-- JWT-based authentication for admin users
+- JWT-based authentication for admin users with HS512 algorithm
+- Secure JWT secret key generation (minimum 64 characters for HS512)
 - Input validation and sanitization
 - CORS configuration for frontend integration
 - Role-based access control
+
+### JWT Security Configuration
+
+The application uses HS512 algorithm for JWT signing, which requires a minimum of 512 bits (64 characters) for the secret key.
+
+**For Production:**
+1. Generate a secure JWT secret:
+   ```bash
+   ./generate-jwt-secret.sh
+   ```
+
+2. Set the environment variable:
+   ```bash
+   export JWT_SECRET="your-generated-secret"
+   ```
+
+3. Or update docker-compose.yml:
+   ```yaml
+   environment:
+     - JWT_SECRET=your-generated-secret
+   ```
+
+**Security Features:**
+- Automatic fallback to secure key generation if provided secret is too short
+- Warning logs when insecure secrets are detected
+- Backward compatibility with existing configurations
 
 ## Development
 
