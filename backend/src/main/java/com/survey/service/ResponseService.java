@@ -10,6 +10,7 @@ import com.survey.repository.ResponseRepository;
 import com.survey.repository.UpvoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,6 +51,7 @@ public class ResponseService {
      * @param userAgent the user agent
      * @return the created response
      */
+    @Transactional
     public Response submitResponse(Long questionId, ResponseDto responseDto, Long userId, 
                                  String ipAddress, String userAgent) {
         // Require authentication for all responses
@@ -108,6 +110,7 @@ public class ResponseService {
      * @param userId the user ID (required for all responses)
      * @return the created response DTO
      */
+    @Transactional
     public ResponseDto createResponseDto(Long questionId, ResponseDto responseDto, Long userId) {
         Response response = submitResponse(questionId, responseDto, userId, null, null);
         return new ResponseDto(response, false);
