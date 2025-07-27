@@ -1,8 +1,50 @@
 # Survey Application
 
-A full-stack survey web application built with Spring Boot (backend) and React (frontend).
+A full-stack survey web application built with Spring Boot (backend) and React (frontend), designed for creating and managing surveys with user participation and analytics.
 
-## Features
+## 🚀 Quick Start
+
+### Option 1: Docker (Recommended)
+
+**Prerequisites:**
+- Docker (version 20.10 or higher)
+- Docker Compose (version 2.0 or higher)
+
+```bash
+# Make the script executable
+chmod +x build-and-run.sh
+
+# Build and run the application
+./build-and-run.sh
+```
+
+**Access the application:**
+- **Frontend**: http://localhost
+- **API Documentation**: http://localhost/swagger-ui
+- **Health Check**: http://localhost/health
+
+### Option 2: Local Development
+
+**Prerequisites:**
+- Java 17 or higher
+- Node.js 18 or higher
+- npm or yarn
+
+**Backend Setup:**
+```bash
+cd backend
+./mvnw clean install
+./mvnw spring-boot:run
+```
+
+**Frontend Setup:**
+```bash
+cd frontend
+npm install
+npm start
+```
+
+## 📋 Features
 
 ### User Features
 - User login with JWT authentication (accounts created by admin)
@@ -24,13 +66,39 @@ A full-stack survey web application built with Spring Boot (backend) and React (
 - View all responses and upvotes
 - Analytics and engagement trends
 
-## Tech Stack
+## 🏗️ Architecture
+
+The application uses a modern full-stack architecture:
+
+- **Frontend**: React.js application with TypeScript and Material-UI
+- **Backend**: Spring Boot application with JPA/Hibernate
+- **Database**: SQLite (development) / PostgreSQL/MySQL (production)
+- **Reverse Proxy**: Nginx (Docker deployment)
+- **Authentication**: JWT-based with Spring Security
+
+### Docker Architecture
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Nginx Proxy   │───▶│  Spring Boot    │───▶│   SQLite DB     │
+│   (Port 80)     │    │   (Port 8080)   │    │   (Volume)      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐
+│  React Frontend │    │   Static Files  │
+│   (Built)       │    │   (Served)      │
+└─────────────────┘    └─────────────────┘
+```
+
+## 🛠️ Tech Stack
 
 ### Backend
 - **Framework**: Spring Boot 3.x
-- **Database**: SQLite
-- **Security**: Spring Security with JWT
+- **Database**: SQLite (H2 for testing)
+- **Security**: Spring Security with JWT (HS512)
 - **API Documentation**: OpenAPI/Swagger
+- **Build Tool**: Maven
+- **Logging**: SLF4J with Logback
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
@@ -38,245 +106,124 @@ A full-stack survey web application built with Spring Boot (backend) and React (
 - **State Management**: React Context + Hooks
 - **Charts**: Recharts for analytics
 - **HTTP Client**: Axios
+- **Build Tool**: Vite
 
-## Project Structure
+### DevOps
+- **Containerization**: Docker with multi-stage builds
+- **Reverse Proxy**: Nginx
+- **Process Management**: Docker Compose
+
+## 📁 Project Structure
 
 ```
 survey-project/
 ├── backend/                 # Spring Boot application
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/survey/
-│   │   │   │   ├── controller/
-│   │   │   │   ├── model/
-│   │   │   │   ├── repository/
-│   │   │   │   ├── service/
-│   │   │   │   ├── security/
-│   │   │   │   └── config/
-│   │   │   └── resources/
-│   │   └── test/
-│   ├── pom.xml
-│   └── README.md
+│   ├── src/main/java/com/survey/
+│   │   ├── controller/      # REST API controllers
+│   │   ├── model/          # JPA entities
+│   │   ├── repository/     # Data access layer
+│   │   ├── service/        # Business logic
+│   │   ├── security/       # JWT authentication
+│   │   ├── config/         # Configuration classes
+│   │   ├── dto/           # Data transfer objects
+│   │   └── exception/     # Custom exceptions
+│   ├── src/main/resources/
+│   │   ├── application.properties
+│   │   ├── logback-spring.xml
+│   │   └── schema.sql
+│   └── pom.xml
 ├── frontend/                # React application
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   ├── types/
-│   │   └── utils/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API service layer
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── types/         # TypeScript type definitions
+│   │   ├── context/       # React context providers
+│   │   └── providers/     # App providers
 │   ├── package.json
-│   └── README.md
-├── database/                # Database scripts
-│   ├── schema.sql
-│   └── seed.sql
+│   └── tsconfig.json
+├── Dockerfile              # Multi-stage Docker build
+├── docker-compose.yml      # Docker Compose configuration
+├── nginx.conf.template     # Nginx configuration
+├── build-and-run.sh       # Build and run script
 └── README.md
 ```
 
-## Quick Start
+## 🔧 Configuration
 
-### Prerequisites
-- Java 17 or higher
-- Node.js 18 or higher
-- npm or yarn
+### Environment Variables
 
-### Backend Setup
+#### Docker Environment Variables
+```yaml
+environment:
+  # Application
+  - SPRING_PROFILES_ACTIVE=docker
+  - JAVA_OPTS=-Xmx512m -Xms256m
+  
+  # Security
+  - JWT_SECRET=your-secure-jwt-secret-key
+  
+  # Logging (see Logging Configuration section)
+  - LOG_LEVEL_ROOT=INFO
+  - LOG_LEVEL_SURVEY=INFO
+  - LOG_LEVEL_CONTROLLER=INFO
+  - LOG_LEVEL_SERVICE=INFO
+  - LOG_LEVEL_REPOSITORY=INFO
+  - LOG_LEVEL_SECURITY=INFO
+  - LOG_LEVEL_HIBERNATE=WARN
+```
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-
-2. Build the project:
-   ```bash
-   ./mvnw clean install
-   ```
-
-3. Run the application:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-The backend will start on `http://localhost:8080`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-
-The frontend will start on `http://localhost:3000`
-
-## Database Setup
-
-The application uses SQLite with automatic schema creation. Sample data is loaded on startup.
-
-### Default Admin Credentials
-- **Username**: admin
-- **Password**: admin123
-
-## API Documentation
-
-Once the backend is running, you can access the API documentation at:
-- Swagger UI: `http://localhost:8080/swagger-ui.html` (direct backend)
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs` (direct backend)
-- Swagger UI: `http://localhost/swagger-ui/` (via nginx proxy)
-- OpenAPI JSON: `http://localhost/v3/api-docs` (via nginx proxy)
-
-## Key Endpoints
-
-### Public Endpoints
-- `GET /api/surveys/active` - List active surveys
-- `GET /api/surveys/{id}` - Get survey details
-- `POST /api/responses` - Submit a response
-- `POST /api/responses/{id}/upvote` - Upvote a response
-
-### Admin Endpoints
-- `POST /api/auth/login` - Admin login
-- `GET /api/admin/surveys` - List all surveys (admin)
-- `POST /api/admin/surveys` - Create survey
-- `PUT /api/admin/surveys/{id}` - Update survey
-- `DELETE /api/admin/surveys/{id}` - Delete survey
-- `GET /api/admin/analytics` - Get analytics data
-- `GET /api/admin/export/{surveyId}` - Export survey data
-
-## Features in Detail
-
-### Survey Management
-- Create surveys with title, description, and date range
-- Add multiple questions to surveys
-- Schedule surveys to start/end at specific times
-- Publish surveys to make them available to users
-
-### Response System
-- Users can submit responses to questions
-- Top 5 responses with most upvotes are displayed
-- Users can upvote responses (one per user per response)
-- Real-time updates when responses or upvotes are added
-
-### Analytics
-- Total responses per survey
-- Participation rates
-- Top upvoted responses
-- Engagement trends over time
-- Export functionality for data analysis
-
-## Security
-
-- JWT-based authentication for admin users with HS512 algorithm
-- Secure JWT secret key generation (minimum 64 characters for HS512)
-- Input validation and sanitization
-- CORS configuration for frontend integration
-- Role-based access control
-
-### JWT Security Configuration
-
-The application uses HS512 algorithm for JWT signing, which requires a minimum of 512 bits (64 characters) for the secret key.
+#### JWT Security Configuration
+The application uses HS512 algorithm for JWT signing, requiring a minimum of 512 bits (64 characters) for the secret key.
 
 **For Production:**
-1. Generate a secure JWT secret:
-   ```bash
-   ./generate-jwt-secret.sh
-   ```
+```bash
+# Generate a secure JWT secret
+./generate-jwt-secret.sh
 
-2. Set the environment variable:
-   ```bash
-   export JWT_SECRET="your-generated-secret"
-   ```
+# Set environment variable
+export JWT_SECRET="your-generated-secret"
+```
 
-3. Or update docker-compose.yml:
-   ```yaml
-   environment:
-     - JWT_SECRET=your-generated-secret
-   ```
+### Database Configuration
+- **Development**: SQLite with automatic schema creation
+- **Production**: PostgreSQL or MySQL (configure in application.properties)
+- **Persistence**: Database file mounted as volume in Docker
 
-**Security Features:**
-- Automatic fallback to secure key generation if provided secret is too short
-- Warning logs when insecure secrets are detected
-- Backward compatibility with existing configurations
+### Default Credentials
+- **Admin Username**: admin
+- **Admin Password**: admin123
 
-## Authentication & Authorization
+## 📊 Logging Configuration
 
-### User Authentication
-The application requires authentication for all survey participation:
+The application uses comprehensive logging with configurable log levels via Docker Compose environment variables.
 
-**User Management:**
-- User accounts are created by administrators only
-- Passwords are securely hashed using BCrypt
-- Username and email uniqueness validation
+### Available Log Levels
+- **ERROR**: Critical errors requiring immediate attention
+- **WARN**: Warning conditions that should be investigated
+- **INFO**: General information about application flow
+- **DEBUG**: Detailed information for debugging
+- **TRACE**: Very detailed information (rarely used)
 
-**User Login:**
-- JWT-based authentication with configurable token expiration
-- Automatic token validation and refresh
-- Secure password handling
+### Logging Categories
+```yaml
+# Application Logging
+- LOG_LEVEL_ROOT=INFO                    # Root logging level
+- LOG_LEVEL_SURVEY=INFO                  # Main application package
+- LOG_LEVEL_CONTROLLER=INFO              # Controller layer
+- LOG_LEVEL_SERVICE=INFO                 # Service layer
+- LOG_LEVEL_REPOSITORY=INFO              # Repository layer
+- LOG_LEVEL_SECURITY=INFO                # Security components
+- LOG_LEVEL_CONFIG=INFO                  # Configuration classes
 
-**Survey Authentication:**
-- All surveys require user authentication
-- Users must be logged in to participate in any survey
+# Framework Logging
+- LOG_LEVEL_SPRING_SECURITY=WARN         # Spring Security
+- LOG_LEVEL_SPRING_WEB=INFO              # Spring Web
+- LOG_LEVEL_HIBERNATE=WARN               # Hibernate SQL
+```
 
-### Admin Authentication
-- Separate admin login system
-- Role-based access control (ADMIN vs USER roles)
-- Admin users can access dashboard and management features
-
-### Security Features
-- JWT token validation and expiration
-- Password encryption with BCrypt
-- CORS configuration for cross-origin requests
-- Input validation and sanitization
-- SQL injection prevention through JPA/Hibernate
-
-## Development
-
-### Adding New Features
-- Backend: Add controllers, services, and repositories as needed
-- Frontend: Create new components and pages in the appropriate directories
-- Database: Add new entities and update the schema
-
-### Testing
-- Backend tests: `./mvnw test`
-- Frontend tests: `npm test`
-
-## Troubleshooting
-
-### Common Issues
-1. **Port conflicts**: Change ports in application.properties or package.json
-2. **Database issues**: Delete the survey.db file to reset the database
-3. **CORS errors**: Ensure backend is running and CORS is properly configured
-
-### Logs
-- Backend logs: Check console output or application.log
-- Frontend logs: Check browser console
-- Docker logs: Use `docker-compose logs survey-app` to view all logs including nginx access logs
-- Nginx access logs: Configured to output to Docker stdout/stderr for easy viewing with `docker logs`
-
-#### Backend Logging Configuration
-The backend uses comprehensive logging with configurable log levels via Docker Compose environment variables:
-
-**Available Log Levels:**
-- `LOG_LEVEL_ROOT` - Root logging level (default: INFO)
-- `LOG_LEVEL_SURVEY` - Main application package (default: INFO)
-- `LOG_LEVEL_CONTROLLER` - Controller layer (default: INFO)
-- `LOG_LEVEL_SERVICE` - Service layer (default: INFO)
-- `LOG_LEVEL_REPOSITORY` - Repository layer (default: INFO)
-- `LOG_LEVEL_SECURITY` - Security components (default: INFO)
-- `LOG_LEVEL_CONFIG` - Configuration classes (default: INFO)
-- `LOG_LEVEL_SPRING_SECURITY` - Spring Security (default: WARN)
-- `LOG_LEVEL_SPRING_WEB` - Spring Web (default: INFO)
-- `LOG_LEVEL_HIBERNATE` - Hibernate SQL (default: WARN)
-
-**Usage Examples:**
+### Usage Examples
 ```bash
 # Development (verbose logging)
 docker compose up -d -e LOG_LEVEL_ROOT=DEBUG -e LOG_LEVEL_SURVEY=DEBUG
@@ -288,33 +235,187 @@ docker compose up -d -e LOG_LEVEL_ROOT=WARN -e LOG_LEVEL_SURVEY=INFO
 docker compose up -d -e LOG_LEVEL_SECURITY=DEBUG -e LOG_LEVEL_HIBERNATE=DEBUG
 ```
 
-For detailed logging configuration, see `LOGGING_CONFIGURATION.md`.
-
-#### Docker Logging Configuration
-The application is configured to send all logs (including nginx access logs) to Docker's logging system:
-- Access logs: Sent to `/dev/stdout` (visible with `docker logs`)
-- Error logs: Sent to `/dev/stderr` (visible with `docker logs`)
-- Log rotation: Configured with max-size 10MB and max-file 3
-
-To view logs:
+### Viewing Logs
 ```bash
 # View all logs
-docker-compose logs survey-app
+docker compose logs survey-app
 
 # Follow logs in real-time
-docker-compose logs -f survey-app
+docker compose logs -f survey-app
 
 # View recent logs
 docker logs --tail 50 <container-id>
 ```
 
-## Contributing
+## 🔌 API Documentation
+
+### Access Points
+- **Swagger UI**: http://localhost/swagger-ui (Docker) or http://localhost:8080/swagger-ui.html (local)
+- **OpenAPI JSON**: http://localhost/v3/api-docs (Docker) or http://localhost:8080/v3/api-docs (local)
+
+### Key Endpoints
+
+#### Public Endpoints
+- `GET /api/surveys/active` - List active surveys
+- `GET /api/surveys/{id}` - Get survey details
+- `POST /api/responses` - Submit a response
+- `POST /api/responses/{id}/upvote` - Upvote a response
+
+#### Admin Endpoints
+- `POST /api/auth/login` - Admin login
+- `GET /api/admin/surveys` - List all surveys (admin)
+- `POST /api/admin/surveys` - Create survey
+- `PUT /api/admin/surveys/{id}` - Update survey
+- `DELETE /api/admin/surveys/{id}` - Delete survey
+- `GET /api/admin/analytics` - Get analytics data
+- `GET /api/admin/export/{surveyId}` - Export survey data
+
+## 🔒 Security Features
+
+### Authentication & Authorization
+- **JWT-based authentication** with HS512 algorithm
+- **Role-based access control** (ADMIN vs USER roles)
+- **Secure password handling** with BCrypt encryption
+- **Token validation and expiration**
+- **CORS configuration** for cross-origin requests
+
+### Security Headers
+- XSS protection
+- Content type sniffing prevention
+- Security headers via nginx
+- Rate limiting to prevent abuse
+
+### Production Security
+- Non-root user execution in Docker
+- Input validation and sanitization
+- SQL injection prevention through JPA/Hibernate
+- Secure JWT secret key generation
+
+## 🗄️ Database Management
+
+### Persistence
+The SQLite database is mounted as a volume to ensure data persistence:
+```yaml
+volumes:
+  - ./survey.db:/app/backend/survey.db
+```
+
+### Backup
+```bash
+# Stop the application
+docker compose down
+
+# Backup database
+cp survey.db survey.db.backup
+
+# Restart the application
+docker compose up -d
+```
+
+### Reset Database
+```bash
+# WARNING: This will delete all data
+rm survey.db
+docker compose up -d
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Application Won't Start
+```bash
+# Check if port 80 is available
+sudo lsof -i :80
+
+# Check Docker logs
+docker compose logs survey-app
+```
+
+#### Database Issues
+```bash
+# Check database file permissions
+ls -la survey.db
+
+# Reset database (WARNING: This will delete all data)
+rm survey.db
+docker compose up -d
+```
+
+#### Memory Issues
+If the application runs out of memory, increase the JVM heap size:
+```yaml
+environment:
+  - JAVA_OPTS=-Xmx1g -Xms512m
+```
+
+#### CORS Errors
+Ensure backend is running and CORS is properly configured in application.properties.
+
+### Performance Optimization
+1. **Increase JVM Memory**: Adjust `JAVA_OPTS` for your server capacity
+2. **Nginx Caching**: Configure nginx caching for static assets
+3. **Database Optimization**: Consider database indexing and query optimization
+4. **Load Balancing**: Use multiple instances behind a load balancer
+
+## 🚀 Deployment
+
+### Production Considerations
+1. **Change JWT Secret**: Update the JWT secret via environment variable
+2. **Use HTTPS**: Configure SSL/TLS certificates
+3. **Database**: Consider using a production database (PostgreSQL, MySQL)
+4. **Monitoring**: Add proper monitoring and alerting
+5. **Backup Strategy**: Implement automated database backups
+
+### Docker Production Build
+```bash
+# Build optimized production image
+docker compose build --no-cache
+
+# Run with production settings
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+## 🤝 Contributing
 
 1. Follow the existing code structure and naming conventions
 2. Add appropriate tests for new features
 3. Update documentation as needed
 4. Ensure all endpoints are properly documented in Swagger
+5. Test the Docker build process locally
 
-## License
+## 📝 Development
 
-This project is for educational and demonstration purposes. 
+### Adding New Features
+- **Backend**: Add controllers, services, and repositories as needed
+- **Frontend**: Create new components and pages in the appropriate directories
+- **Database**: Add new entities and update the schema
+
+### Testing
+```bash
+# Backend tests
+cd backend && ./mvnw test
+
+# Frontend tests
+cd frontend && npm test
+```
+
+### Rebuilding After Changes
+```bash
+# Enable bake for better build performance
+export COMPOSE_BAKE=true
+
+# Rebuild and restart
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+## 📄 License
+
+This project is for educational and demonstration purposes.
+
+---
+
+For detailed logging configuration, see the Logging Configuration section above.
+For Docker-specific setup, see the Docker Architecture section above. 
