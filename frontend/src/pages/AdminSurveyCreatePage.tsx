@@ -150,7 +150,7 @@ const AdminSurveyCreatePage: React.FC = () => {
   };
 
   if (!isAdmin) {
-    navigate('/admin/login');
+            navigate('/login');
     return null;
   }
 

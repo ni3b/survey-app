@@ -95,10 +95,10 @@ const HomePage: React.FC = () => {
                   variant="outlined"
                   size="large"
                   component={RouterLink}
-                  to="/admin/login"
+                  to="/login"
                   sx={{ color: 'white', borderColor: 'white' }}
                 >
-                  Admin Login
+                  Sign In
                 </Button>
               </Box>
             </Box>

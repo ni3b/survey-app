@@ -81,22 +81,13 @@ const Header: React.FC = () => {
                 </Button>
               </>
             ) : (
-              <>
-                <Button
-                  color="inherit"
-                  component={RouterLink}
-                  to="/login"
-                >
-                  Sign In
-                </Button>
-                <Button
-                  color="inherit"
-                  component={RouterLink}
-                  to="/admin/login"
-                >
-                  Admin Login
-                </Button>
-              </>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/login"
+              >
+                Sign In
+              </Button>
             )}
           </Box>
         </Toolbar>

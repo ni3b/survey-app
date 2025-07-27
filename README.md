@@ -46,8 +46,13 @@ npm start
 
 ## 📋 Features
 
+### Authentication System
+- **Common Sign-In**: Single login page for both users and admins
+- **Role-Based Access**: Automatic redirection based on user role
+- **JWT Authentication**: Secure token-based authentication
+- **Account Management**: Admin-created accounts with role assignment
+
 ### User Features
-- User login with JWT authentication (accounts created by admin)
 - Browse and participate in active surveys
 - View questions one at a time or as a list
 - See top 5 responses with upvotes for each question
@@ -57,7 +62,6 @@ npm start
 - Responsive design for desktop and mobile
 
 ### Admin Features
-- Secure admin login
 - Dashboard with survey analytics
 - Survey management (create, edit, delete, schedule)
 - Question management within surveys

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -10,7 +10,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -89,7 +88,7 @@ const AdminUserManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (!isAdmin) {
-      navigate('/admin/login');
+              navigate('/login');
       return;
     }
 
@@ -156,27 +155,7 @@ const AdminUserManagementPage: React.FC = () => {
     }
   };
 
-  const handleChangeRole = async (userId: number, newRole: string) => {
-    try {
-      await adminService.changeUserRole(userId, newRole);
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
-      ));
-    } catch (err: any) {
-      alert(err.message || 'Failed to change user role. Please try again.');
-    }
-  };
 
-  const handleChangeStatus = async (userId: number, active: boolean) => {
-    try {
-      await adminService.changeUserStatus(userId, active);
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, active } : user
-      ));
-    } catch (err: any) {
-      alert(err.message || 'Failed to change user status. Please try again.');
-    }
-  };
 
   const handleSubmitUser = async () => {
     try {

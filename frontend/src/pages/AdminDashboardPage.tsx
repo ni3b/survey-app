@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Container,
@@ -10,7 +10,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Paper,
   List,
   ListItem,
   ListItemText,
@@ -59,7 +58,7 @@ const AdminDashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (!isAdmin) {
-      navigate('/admin/login');
+              navigate('/login');
       return;
     }
 

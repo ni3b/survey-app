@@ -65,7 +65,7 @@ const AdminSurveyEditPage: React.FC = () => {
 
   useEffect(() => {
     if (!isAdmin) {
-      navigate('/admin/login');
+              navigate('/login');
       return;
     }
 

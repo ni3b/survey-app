@@ -15,9 +15,8 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import SurveyListPage from './pages/SurveyListPage';
 import SurveyDetailPage from './pages/SurveyDetailPage';
-import UserLoginPage from './pages/UserLoginPage';
+import CommonLoginPage from './pages/CommonLoginPage';
 
-import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminSurveyCreatePage from './pages/AdminSurveyCreatePage';
 import AdminSurveyEditPage from './pages/AdminSurveyEditPage';
@@ -63,9 +62,8 @@ function App() {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/surveys" element={<SurveyListPage />} />
                         <Route path="/surveys/:id" element={<SurveyDetailPage />} />
-                        <Route path="/login" element={<UserLoginPage />} />
+                        <Route path="/login" element={<CommonLoginPage />} />
 
-                        <Route path="/admin/login" element={<AdminLoginPage />} />
                         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                         <Route path="/admin/users" element={<AdminUserManagementPage />} />
                         <Route path="/admin/surveys/create" element={<AdminSurveyCreatePage />} />

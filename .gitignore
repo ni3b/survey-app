@@ -1,6 +1,8 @@
 # Compiled class files
 *.class
 
+backend/survey.*
+
 # Log files
 *.log
 logs/
